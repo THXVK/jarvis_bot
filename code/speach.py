@@ -3,7 +3,7 @@ import requests
 from config import IAM_TOKEN, FOLDER_ID
 
 
-def make_requests(user_text: str):
+def text_to_speach(user_text: str):
     headers = {
         'Authorization': f'Bearer {IAM_TOKEN}',
     }
