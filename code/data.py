@@ -1,5 +1,5 @@
 import sqlite3
-from config import DB_NAME
+from config import DB_NAME, MAX_STORY_LEN
 from log import logger
 
 
@@ -117,6 +117,26 @@ def clear_user_story_data(user_id):
         return True
     else:
         return False
+
+
+def update_story(user_id, text):
+    story_text = get_user_data(user_id)[5] + ' ' + text
+    story_list = story_text.split(' ')
+    story_len = len(story_list)
+
+    if story_len > MAX_STORY_LEN:
+        new_story = ' '.join([story_list[x] for x in range(story_len - 1 - MAX_STORY_LEN, story_len - 1)])
+
+    sql_query = (
+        "UPDATE users_data "
+        "SET dialogue_story = ? "
+        "WHERE user_id = ?;"
+    )
+    execute_query(sql_query, (new_story, user_id))
+
+
+
+
 
 
 def get_table_data():

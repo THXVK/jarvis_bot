@@ -132,7 +132,7 @@ def s_to_t(message):
     text = result[1]
 
     if result[0]:
-        update_story(text, user_id)
+
         return result[1]
 
     else:
@@ -141,8 +141,8 @@ def s_to_t(message):
 
 def gen_gpt_answer(user_id, text, message_format):
 
-    ...
 
+    update_story(text, user_id)
     if message_format == 'voice':
         send_voice_answer(text, user_id)
     else:
