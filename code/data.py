@@ -43,7 +43,7 @@ def create_users_data_table():
         "(id INTEGER PRIMARY KEY, "
         "user_id INTEGER, "
         "gpt_tokens INTEGER, "
-        "stt_simbols INTEGER, "
+        "stt_blocks INTEGER, "
         "tts_simbols INTEGER, "
         "dialogue_story TEXT, "
         ""

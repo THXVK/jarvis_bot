@@ -1,6 +1,10 @@
+import math
+
 import telebot
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from config import TOKEN, MAX_USERS, MAX_TOKENS_PER_MESSAGE
+
+from speach import speech_to_text
+from config import TOKEN, MAX_USERS, MAX_TOKENS_PER_MESSAGE, MAX_STT_BLOCKS_PER_USER
 from data import actions, get_table_data, get_user_data, is_user_in_table, add_new_user
 
 bot = telebot.TeleBot(token=TOKEN)
@@ -49,10 +53,10 @@ def start(message: Message):
     if not is_user_in_table(chat_id):
         if len(get_table_data()) <= MAX_USERS:
             add_new_user(chat_id)
-            bot.send_message(chat_id, 'добро пожаловать') \
-                    bot.send_message(chat_id,
-                                     'Привет! Я ваш голосовой помощник, вот что я могу:',
-                                     reply_markup=gen_main_markup(chat_id))
+            bot.send_message(chat_id, 'добро пожаловать')
+            bot.send_message(chat_id,
+                             'Привет! Я ваш голосовой помощник, вот что я могу:',
+                             reply_markup=gen_main_markup(chat_id))
         else:
             bot.send_message(chat_id, 'база данных переполнена, сейчас вы не можете использовать бота')
     else:
@@ -90,20 +94,54 @@ def text_processing(message):
         elif message.text.startswith('/'):
             msg = bot.send_message(user_id, 'чтобы использовать команды, используйте /stop')
             bot.register_next_step_handler(msg, t_or_v)
+        else:
+            gen_gpt_answer(user_id, message.text, 'text')
+
     else:
-        ...
+        bot.send_message(user_id, 'ваши токены для общения закончились')
+
 
 def voice_processing(message):
-    ...
+    user_id = message.chat.id
+    data = data = get_user_data(user_id)
+    blocks = data[3]
+    tts_simbols = data[4]
+    dur = message.voice.duration
+    if dur == 0:
+        dur = 1
+    blocks_duration = math.ceil(dur / 15)
+
+    if dur > 30:
+        msg = bot.send_message(user_id, 'гс слишком длинное, запишите новое')
+        bot.register_next_step_handler(msg, t_or_v)
+    elif blocks + blocks_duration > MAX_STT_BLOCKS_PER_USER:
+        bot.send_message(user_id, 'ваш лимит на распознавание речи исчерпан')
+    elif tts_simbols >= 0:
+        text = s_to_t(message)
+        gen_gpt_answer(user_id, text, 'voice')
+    else:
+        bot.send_message(user_id, 'ваш лимит на синтез речи исчерпан')
 
 
+def s_to_t(message):
+    file_id = message.voice.file_id
+    file_info = bot.get_file(file_id)
+    file = bot.download_file(file_info.file_path)
+    user_id = message.chat.id
+    result = speech_to_text(file)
+    text = result[1]
+
+    if result[0]:
+        update_story(text, user_id)
+        return result[1]
+
+    else:
+        bot.send_message(user_id, result[1])
 
 
 def gen_gpt_answer(user_id, text, message_format):
 
-
     ...
-
 
     if message_format == 'voice':
         send_voice_answer(text, user_id)

@@ -11,6 +11,11 @@ MAX_TOKENS_PER_USER = 700
 ADMINS_ID = [1999763430]
 IAM_TOKEN_PATH = 'other/token.json'
 IAM_TOKEN_ENDPOINT = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
+STT_BLOCKS_PER_MESSAGE = 2
+MAX_STT_BLOCKS_PER_USER = 20
+# TTS_SIMBOLS_PER_MESSAGE = 100
+TTS_SIMBOLS_PER_USER = 500
+
 
 load_dotenv()
 IAM_TOKEN = getenv('IAM_TOKEN')
