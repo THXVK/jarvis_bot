@@ -6,7 +6,8 @@ from os import getenv
 
 GPT_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
 MAX_USERS = 3
-
+MAX_TOKENS_PER_MESSAGE = 100
+MAX_TOKENS_PER_USER = 700
 ADMINS_ID = [1999763430]
 IAM_TOKEN_PATH = 'other/token.json'
 IAM_TOKEN_ENDPOINT = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"

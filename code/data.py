@@ -42,8 +42,90 @@ def create_users_data_table():
         "CREATE TABLE IF NOT EXISTS users_data "
         "(id INTEGER PRIMARY KEY, "
         "user_id INTEGER, "
+        "gpt_tokens INTEGER, "
+        "stt_simbols INTEGER, "
+        "tts_simbols INTEGER, "
+        "dialogue_story TEXT, "
         ""
     )
     execute_query(sql_query)
+
+
+def add_new_user(user_id: int):
+    if not is_user_in_table(user_id):
+        sql_query = (
+            f"INSERT INTO users_data "
+            f"(user_id, sessions, tokens) "
+            f"VALUES (?, {MAX_SESSIONS}, {MAX_TOKENS_PER_SESSION});"
+        )
+
+        execute_query(sql_query, (user_id,))
+        return True
+    else:
+        return False
+
+
+def is_user_in_table(user_id: int) -> bool:
+    sql_query = (
+        f'SELECT * '
+        f'FROM users_data '
+        f'WHERE user_id = ?;'
+    )
+    return bool(execute_query(sql_query, (user_id,)))
+
+
+def get_user_data(user_id: int):
+    if is_user_in_table(user_id):
+        sql_query = (
+            f'SELECT * '
+            f'FROM users_data '
+            f'WHERE user_id = {user_id} '
+        )
+        row = execute_query(sql_query)[0]
+
+        return row
+
+
+def update_row(user_id: int, column_name: str, new_value: str | int | None) -> bool:
+    if is_user_in_table(user_id):
+        sql_query = (
+            f"UPDATE users_data "
+            f"SET {column_name} = ? "
+            f"WHERE user_id = ?;"
+        )
+
+        execute_query(sql_query, (new_value, user_id))
+        return True
+    else:
+        return False
+
+
+def clear_user_story_data(user_id):
+    if is_user_in_table(user_id):
+        sql_query = (
+            f"UPDATE users_data "
+            f"SET tokens = 0, "
+            f"character TEXT, "
+            f"setting = '', "
+            f"genre = '', "
+            f"addition = '', "
+            f"story = '', "
+            f"WHERE user_id = ?;"
+        )
+
+        execute_query(sql_query, (user_id,))
+        return True
+    else:
+        return False
+
+
+def get_table_data():
+    sql_query = (
+        f'SELECT * '
+        f'FROM users_data;'
+    )
+    res = execute_query(sql_query)
+    return res
+
 
 #endregion
