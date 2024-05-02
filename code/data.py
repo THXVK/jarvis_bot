@@ -1,5 +1,5 @@
 import sqlite3
-from config import DB_NAME, MAX_STORY_LEN
+from config import DB_NAME, MAX_STORY_LEN, MAX_TOKENS_PER_USER, MAX_STT_BLOCKS_PER_USER, TTS_SIMBOLS_PER_USER
 from log import logger
 
 
@@ -51,15 +51,15 @@ def create_users_data_table():
     execute_query(sql_query)
 
 
-def add_new_user(user_id: int):
+def add_new_user(user_id: int) -> bool:
     if not is_user_in_table(user_id):
         sql_query = (
-            f"INSERT INTO users_data "
-            f"(user_id, sessions, tokens) "
-            f"VALUES (?, {MAX_SESSIONS}, {MAX_TOKENS_PER_SESSION});"
+            "INSERT INTO users_data "
+            "(user_id, gpt_tokens, stt_blocks, tts_simbols, dialogue_story)"
+            "VALUES (?, ?, ?, ?, ?);"
         )
 
-        execute_query(sql_query, (user_id,))
+        execute_query(sql_query, (user_id, MAX_TOKENS_PER_USER, MAX_STT_BLOCKS_PER_USER, TTS_SIMBOLS_PER_USER, ''))
         return True
     else:
         return False
@@ -67,9 +67,9 @@ def add_new_user(user_id: int):
 
 def is_user_in_table(user_id: int) -> bool:
     sql_query = (
-        f'SELECT * '
-        f'FROM users_data '
-        f'WHERE user_id = ?;'
+        'SELECT * '
+        'FROM users_data '
+        'WHERE user_id = ?;'
     )
     return bool(execute_query(sql_query, (user_id,)))
 
@@ -82,7 +82,7 @@ def get_user_data(user_id: int):
             f'WHERE user_id = {user_id} '
         )
         row = execute_query(sql_query)[0]
-
+        print(f'get user data: row')
         return row
 
 
@@ -126,7 +126,8 @@ def update_story(user_id, text):
 
     if story_len > MAX_STORY_LEN:
         new_story = ' '.join([story_list[x] for x in range(story_len - 1 - MAX_STORY_LEN, story_len - 1)])
-
+    else:
+        new_story = story_text
     sql_query = (
         "UPDATE users_data "
         "SET dialogue_story = ? "
@@ -135,8 +136,18 @@ def update_story(user_id, text):
     execute_query(sql_query, (new_story, user_id))
 
 
+def tokens_update(user_id, num, token_type):
+    if token_type == 'gpt_tokens':
+        x = 2
+    elif token_type == 'stt_blocks':
+        x = 3
+    else:
+        x = 4
 
+    old_tokens_num = get_user_data(user_id)[x]
+    new_tokens_num = old_tokens_num - num
 
+    update_row(user_id, token_type, new_tokens_num)
 
 
 def get_table_data():

@@ -3,9 +3,10 @@ import math
 import telebot
 from telebot.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
+from GPT import gpt_ask
 from speach import speech_to_text
 from config import TOKEN, MAX_USERS, MAX_TOKENS_PER_MESSAGE, MAX_STT_BLOCKS_PER_USER
-from data import actions, get_table_data, get_user_data, is_user_in_table, add_new_user
+from data import actions, get_table_data, get_user_data, is_user_in_table, add_new_user, update_story, tokens_update
 
 bot = telebot.TeleBot(token=TOKEN)
 
@@ -132,17 +133,23 @@ def s_to_t(message):
     text = result[1]
 
     if result[0]:
-
         return result[1]
-
     else:
         bot.send_message(user_id, result[1])
 
 
 def gen_gpt_answer(user_id, text, message_format):
+    # msg = bot.send_message(user_id, 'подождите.')
+    gpt_ans, tokens = gpt_ask(text, user_id)
+    # bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.id, text='подождите..')
 
-
+    tokens_update(user_id, tokens, 'gpt_tokens')
     update_story(text, user_id)
+
+    # bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.id, text='подождите...')
+    update_story(gpt_ans, user_id)
+
+    # bot.delete_message(user_id, msg.id)
     if message_format == 'voice':
         send_voice_answer(text, user_id)
     else:
@@ -155,3 +162,6 @@ def send_voice_answer(text, user_id):
 
 def send_text_answer(text, user_id):
     ...
+
+
+bot.infinity_polling(timeout=60, long_polling_timeout=5)

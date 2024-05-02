@@ -1,6 +1,8 @@
 import requests
 import json
 import time
+
+from data import get_user_data
 from config import IAM_TOKEN_ENDPOINT, IAM_TOKEN_PATH, FOLDER_ID, GPT_URL, MAX_TOKENS_PER_MESSAGE
 from log import logger
 
@@ -52,6 +54,9 @@ def get_iam_token() -> str:
 
 def gen_promt(user_id) -> str:
     promt = None
+
+    ...
+
     return promt
 
 
