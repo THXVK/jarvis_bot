@@ -4,8 +4,13 @@ from log import logger
 
 
 # region python_data
-actions = []
-gpt_promts = {}
+actions = {
+    'пообщаемся?': 'dialogue',
+    'мои токены': 'status',
+    'распознавание': 'stt',
+    'синтез': 'tts'
+}
+
 
 # endregion
 
@@ -16,7 +21,7 @@ def create_db():
     connection.close()
 
 
-def execute_query(query: str, data: tuple | None = None, db_name: str = DB_NAME):
+def execute_query(func_name, query: str, data: tuple | None = None, db_name: str = DB_NAME):
     try:
         connection = sqlite3.connect(db_name, check_same_thread=False)
         cursor = connection.cursor()
@@ -28,7 +33,7 @@ def execute_query(query: str, data: tuple | None = None, db_name: str = DB_NAME)
             cursor.execute(query)
 
     except sqlite3.Error as e:
-        error_msg = f"Ошибка: {e}"
+        error_msg = f"Ошибка в {func_name}: {e}"
         logger.error(error_msg)
 
     else:
@@ -45,21 +50,20 @@ def create_users_data_table():
         "gpt_tokens INTEGER, "
         "stt_blocks INTEGER, "
         "tts_simbols INTEGER, "
-        "dialogue_story TEXT, "
-        ""
+        "dialogue_story TEXT);"
     )
-    execute_query(sql_query)
+    execute_query('create_users_data_table', sql_query)
 
 
 def add_new_user(user_id: int) -> bool:
     if not is_user_in_table(user_id):
         sql_query = (
             "INSERT INTO users_data "
-            "(user_id, gpt_tokens, stt_blocks, tts_simbols, dialogue_story)"
+            "(user_id, gpt_tokens, stt_blocks, tts_simbols, dialogue_story) "
             "VALUES (?, ?, ?, ?, ?);"
         )
 
-        execute_query(sql_query, (user_id, MAX_TOKENS_PER_USER, MAX_STT_BLOCKS_PER_USER, TTS_SIMBOLS_PER_USER, ''))
+        execute_query('add_new_user', sql_query, (user_id, MAX_TOKENS_PER_USER, MAX_STT_BLOCKS_PER_USER, TTS_SIMBOLS_PER_USER, ''))
         return True
     else:
         return False
@@ -71,7 +75,7 @@ def is_user_in_table(user_id: int) -> bool:
         'FROM users_data '
         'WHERE user_id = ?;'
     )
-    return bool(execute_query(sql_query, (user_id,)))
+    return bool(execute_query('is_user_in_table', sql_query, (user_id,)))
 
 
 def get_user_data(user_id: int):
@@ -79,10 +83,9 @@ def get_user_data(user_id: int):
         sql_query = (
             f'SELECT * '
             f'FROM users_data '
-            f'WHERE user_id = {user_id} '
+            f'WHERE user_id = {user_id};'
         )
-        row = execute_query(sql_query)[0]
-        print(f'get user data: row')
+        row = execute_query('get_user_data', sql_query)[0]
         return row
 
 
@@ -94,33 +97,31 @@ def update_row(user_id: int, column_name: str, new_value: str | int | None) -> b
             f"WHERE user_id = ?;"
         )
 
-        execute_query(sql_query, (new_value, user_id))
+        execute_query('update_row', sql_query, (new_value, user_id))
         return True
     else:
         return False
 
 
-def clear_user_story_data(user_id):
-    if is_user_in_table(user_id):
-        sql_query = (
-            f"UPDATE users_data "
-            f"SET tokens = 0, "
-            f"character TEXT, "
-            f"setting = '', "
-            f"genre = '', "
-            f"addition = '', "
-            f"story = '', "
-            f"WHERE user_id = ?;"
-        )
-
-        execute_query(sql_query, (user_id,))
-        return True
-    else:
-        return False
+def get_table_data():
+    sql_query = (
+        f'SELECT * '
+        f'FROM users_data;'
+    )
+    res = execute_query('get_table_data', sql_query)
+    if not res:
+        res = []
+    return res
 
 
 def update_story(user_id, text):
-    story_text = get_user_data(user_id)[5] + ' ' + text
+    old_story = get_user_data(user_id)[5]
+
+    if old_story:
+        story_text = old_story + ' ' + text
+    else:
+        story_text = text
+
     story_list = story_text.split(' ')
     story_len = len(story_list)
 
@@ -128,12 +129,8 @@ def update_story(user_id, text):
         new_story = ' '.join([story_list[x] for x in range(story_len - 1 - MAX_STORY_LEN, story_len - 1)])
     else:
         new_story = story_text
-    sql_query = (
-        "UPDATE users_data "
-        "SET dialogue_story = ? "
-        "WHERE user_id = ?;"
-    )
-    execute_query(sql_query, (new_story, user_id))
+
+    update_row(user_id, 'dialogue_story', new_story)
 
 
 def tokens_update(user_id, num, token_type):
@@ -150,13 +147,6 @@ def tokens_update(user_id, num, token_type):
     update_row(user_id, token_type, new_tokens_num)
 
 
-def get_table_data():
-    sql_query = (
-        f'SELECT * '
-        f'FROM users_data;'
-    )
-    res = execute_query(sql_query)
-    return res
-
-
-#endregion
+create_db()
+create_users_data_table()
+# endregion

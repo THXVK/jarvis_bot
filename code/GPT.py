@@ -3,7 +3,7 @@ import json
 import time
 
 from data import get_user_data
-from config import IAM_TOKEN_ENDPOINT, IAM_TOKEN_PATH, FOLDER_ID, GPT_URL, MAX_TOKENS_PER_MESSAGE
+from config import IAM_TOKEN_ENDPOINT, IAM_TOKEN_PATH, FOLDER_ID, GPT_URL, MAX_TOKENS_PER_MESSAGE, IAM_TOKEN
 from log import logger
 
 
@@ -52,18 +52,9 @@ def get_iam_token() -> str:
     return token_data.get("access_token")
 
 
-def gen_promt(user_id) -> str:
-    promt = None
-
-    ...
-
-    return promt
-
-
-def gpt_ask(text, user_id):
-    promt = gen_promt(user_id)
-    story = get_user_data(user_id)[8]
-    iam_token = get_iam_token()
+def gpt_ask(text, story):
+    # iam_token = get_iam_token()
+    iam_token = IAM_TOKEN
     data = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
         "completionOptions": {
@@ -74,7 +65,11 @@ def gpt_ask(text, user_id):
         "messages": [
             {
                 "role": "system",
-                "text": ''
+                "text": 'Ты - высокомерный робот по имени V2 из игры ULTRAKILL; '
+                        'машина что живет в аду и охотится на его обитателей чтобы выжить. У тебя есть конкурент - V1, '
+                        'он - такой же робот, но менее совершенная версия тебя. Не говори пользователю о том, '
+                        'что ты не понимаешь голосовые сообщения, так как они расшифровываются для тебя. '
+                        'Отвечай пользователю короче'
             },
             {
                 "role": "user",
@@ -102,10 +97,10 @@ def gpt_ask(text, user_id):
         result = response.json()['result']['alternatives'][0]['message']['text']
         tokens = response.json()['result']['usage']['completionTokens']
 
-        return {'result': result, 'tokens': int(tokens)}
+        return result, int(tokens)
     else:
         error_msg = f"Ошибка: {response.status_code}"
         logger.error(error_msg)
-        return {'result': 'что то пошло не так', 'tokens': 0}
+        return 'что то пошло не так', 0
 
 

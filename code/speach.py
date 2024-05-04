@@ -16,11 +16,11 @@ def text_to_speach(user_text: str):
     response = requests.post('https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize', headers=headers, data=data)
 
     if response.status_code == 200:
-        return True, response.content
+        return True, response.content, len(user_text)
     else:
         error_msg = f'ошибка SpeachKit: {response.content}'
         logger.error(error_msg)
-        return False, error_msg
+        return False, error_msg, 0
 
 
 def speech_to_text(data):
