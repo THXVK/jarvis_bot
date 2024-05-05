@@ -38,7 +38,7 @@ def send_main_menu(message: Message):
 @bot.message_handler(commands=['help'])
 def send_help_message(message: Message):
     bot.send_message(message.chat.id, """
-/start - начало диалога
+/start - стартовая команда, регистрирует пользователя
 /help - список команд
 /stop - останавливает диалог
 /actions - показывает меню действий
