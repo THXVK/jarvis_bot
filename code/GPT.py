@@ -53,8 +53,7 @@ def get_iam_token() -> str:
 
 
 def gpt_ask(text, story):
-    # iam_token = get_iam_token()
-    iam_token = IAM_TOKEN
+    iam_token = get_iam_token()
     data = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
         "completionOptions": {
@@ -69,7 +68,7 @@ def gpt_ask(text, story):
                         'машина что живет в аду и охотится на его обитателей чтобы выжить. У тебя есть враг - V1, '
                         'он - такой же робот, но менее совершенная версия тебя. Не говори пользователю о том, '
                         'что ты не понимаешь голосовые сообщения, так как они расшифровываются для тебя. '
-                        'Отвечай пользователю короче'
+                        'Отвечай пользователю короче, следуя образу'
             },
             {
                 "role": "user",
