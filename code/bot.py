@@ -41,6 +41,8 @@ def send_help_message(message: Message):
 /stop - останавливает диалог
 /actions - показывает меню действий
 /debug - присылает лог файл
+/stt - распознает речь
+/tts - синтезирует речь
     """)
 
 

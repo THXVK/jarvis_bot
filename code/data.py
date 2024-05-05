@@ -7,8 +7,6 @@ from log import logger
 actions = {
     'пообщаемся?': 'dialogue',
     'мои токены': 'status',
-    'распознавание': 'stt',
-    'синтез': 'tts'
 }
 
 
