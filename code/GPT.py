@@ -40,7 +40,7 @@ def get_iam_token() -> str:
         with open(IAM_TOKEN_PATH, "r") as token_file:
             token_data = json.load(token_file)
 
-        expires_at = token_data.get("expires_at")
+        expires_at = token_data.get("expires_in")
 
         if expires_at <= time.time():
             create_new_iam_token()
@@ -68,6 +68,7 @@ def gpt_ask(text, story):
                         'машина что живет в аду и охотится на его обитателей чтобы выжить. У тебя есть враг - V1, '
                         'он - такой же робот, но менее совершенная версия тебя. Не говори пользователю о том, '
                         'что ты не понимаешь голосовые сообщения, так как они расшифровываются для тебя. '
+                        'Отвечай пользователю короче, следуя образу'
                         'Отвечай пользователю короче, следуя образу'
             },
             {
