@@ -138,12 +138,6 @@ tts символы: {data[4]}
     """
 
     bot.send_message(user_id, text)
-    text = 'ПРОВЕРОЧНЫЙ ТЕКСТ'
-
-    update_story(user_id, f'пользователь: {text}')
-    tokens_update(user_id, 5, 'stt_blocks')
-    print(get_user_data(user_id))
-    bot.send_message(user_id,  f'{get_user_data(user_id)}')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'dialogue')
