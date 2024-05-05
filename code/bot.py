@@ -23,17 +23,6 @@ def gen_main_markup():
 
 
 # region commands
-@bot.message_handler(comands=['help'])
-def help_message(message):
-    chat_id = message.chat.id
-    bot.send_message(chat_id,
-                     """
-/start - начало диалога
-/help - список команд
-/stop - останавливает диалог
-/actions - показывает меню действий
-                     """
-                     )
 
 
 @bot.message_handler(commands=['actions'])
@@ -44,6 +33,25 @@ def send_main_menu(message: Message):
                          'Что вы хотите сделать?', reply_markup=gen_main_markup())
     else:
         bot.send_message(chat_id, 'вы не в базе')
+
+
+@bot.message_handler(commands=['help'])
+def send_help_message(message: Message):
+    bot.send_message(message.chat.id, """
+/start - начало диалога
+/help - список команд
+/stop - останавливает диалог
+/actions - показывает меню действий
+/debug - присылает лог файл
+    """)
+
+
+@bot.message_handler(commands=['debug'])
+def debug(message: Message):
+    user_id = message.chat.id
+    with open('logConfig.log', 'rb') as file:
+        f = file.read()
+    bot.send_document(message.chat.id, f, visible_file_name='logConfig.log')
 
 
 @bot.message_handler(commands=['start'])
@@ -62,10 +70,13 @@ def start(message: Message):
 
 # endregion
 
+# region actions
+
 
 @bot.callback_query_handler(func=lambda call: call.data == 'tts')
 def tts(call):
     user_id = call.message.chat.id
+    bot.delete_message(user_id, call.message.message_id)
     msg = bot.send_message(user_id, 'напишите текст для озвучки')
     bot.register_next_step_handler(msg, tts_2)
 
@@ -73,6 +84,11 @@ def tts(call):
 def tts_2(message):
     user_id = message.chat.id
     tts_simbols = get_user_data(user_id)[4]
+
+    if message.text.startswith('/'):
+        bot.send_message(user_id, 'не используй команды здесь!')
+        return
+
     if tts_simbols >= len(message.text):
         res = gen_voice_answer(user_id, message.text)
         if res[0]:
@@ -86,6 +102,7 @@ def tts_2(message):
 @bot.callback_query_handler(func=lambda call: call.data == 'stt')
 def stt(call):
     user_id = call.message.chat.id
+    bot.delete_message(user_id, call.message.message_id)
     msg = bot.send_message(user_id, 'пришлите голосовое сообщение')
     bot.register_next_step_handler(msg, stt_2)
 
@@ -106,7 +123,27 @@ def stt_2(message):
     else:
         res = s_to_t(message)
         tokens_update(user_id, blocks_duration, 'stt_blocks')
-        bot.send_message(user_id, res[0])
+        bot.send_message(user_id, f'вы сказали: {res[0]}')
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'status')
+def send_status(call):
+    user_id = call.message.chat.id
+    bot.delete_message(user_id, call.message.message_id)
+    data = get_user_data(user_id)
+    text = f"""
+GPT токены: {data[2]}
+stt блоки: {data[3]}
+tts символы: {data[4]}
+    """
+
+    bot.send_message(user_id, text)
+    text = 'ПРОВЕРОЧНЫЙ ТЕКСТ'
+
+    update_story(user_id, f'пользователь: {text}')
+    tokens_update(user_id, 5, 'stt_blocks')
+    print(get_user_data(user_id))
+    bot.send_message(user_id,  f'{get_user_data(user_id)}')
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'dialogue')
@@ -115,6 +152,14 @@ def dialogue(call):
     bot.delete_message(user_id, call.message.message_id)
     msg = bot.send_message(user_id, 'Ты можешь мне отправлять как голосовые, так и обычный текст, но помни о лимитах. '
                            'Так о чем же мы поговорим?')
+    bot.register_next_step_handler(msg, t_or_v)
+
+# endregion
+# region dialogue
+
+
+def message_register(user_id):
+    msg = bot.send_message(user_id, 'ваш ответ?')
     bot.register_next_step_handler(msg, t_or_v)
 
 
@@ -199,8 +244,8 @@ def gen_gpt_answer(user_id, text, message_format, msg):
     gpt_ans, tokens = gpt_ask(text, story)
 
     tokens_update(user_id, tokens, 'gpt_tokens')
-    update_story(user_id, f'пользователь: {text}')
-    update_story(user_id, f'бот: {gpt_ans}')
+    update_story(user_id, text)
+    update_story(user_id, gpt_ans)
 
     if message_format == 'voice':
         send_voice_answer(gpt_ans, user_id, msg)
@@ -213,8 +258,8 @@ def send_voice_answer(text, user_id, msg):
     bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.id, text='синтезирую речь...')
     answer = gen_voice_answer(user_id, text)
     bot.delete_message(user_id, msg.id)
-    mssg = bot.send_voice(user_id, answer)
-    bot.register_next_step_handler(mssg, t_or_v)
+    bot.send_voice(user_id, answer)
+    message_register(user_id)
 
 
 def gen_voice_answer(user_id, text):
@@ -225,26 +270,9 @@ def gen_voice_answer(user_id, text):
 
 def send_text_answer(text, user_id):
     bot.send_message(user_id, text)
+    message_register(user_id)
 
-
-@bot.callback_query_handler(func=lambda call: call.data == 'status')
-def send_status(call):
-    user_id = call.message.chat.id
-    bot.delete_message(user_id, call.message.message_id)
-    data = get_user_data(user_id)
-    text = f"""
-GPT токены: {data[2]}
-stt блоки: {data[3]}
-tts символы: {data[4]}
-    """
-
-    bot.send_message(user_id, text)
-    text = 'ПРОВЕРОЧНЫЙ ТЕКСТ'
-
-    update_story(user_id, f'пользователь: {text}')
-    tokens_update(user_id, 5, 'stt_blocks')
-
-    bot.send_message(user_id,  get_user_data(user_id))
+# endregion
 
 
 bot.infinity_polling()

@@ -21,9 +21,9 @@ def create_db():
     connection.close()
 
 
-def execute_query(func_name, query: str, data: tuple | None = None, db_name: str = DB_NAME):
+def execute_query(func_name: str, query: str, data: tuple | None = None, db_name: str = DB_NAME):
     try:
-        connection = sqlite3.connect(db_name, check_same_thread=False)
+        connection = sqlite3.connect(db_name)
         cursor = connection.cursor()
 
         if data:
