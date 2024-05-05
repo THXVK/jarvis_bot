@@ -20,8 +20,6 @@ def gen_main_markup():
     return markup
 
 # endregion
-
-
 # region commands
 
 
@@ -73,10 +71,9 @@ def start(message: Message):
 # region actions
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'tts')
-def tts(call):
-    user_id = call.message.chat.id
-    bot.delete_message(user_id, call.message.message_id)
+@bot.message_handler(commands=['tts'])
+def tts(message):
+    user_id = message.chat.id
     msg = bot.send_message(user_id, 'напишите текст для озвучки')
     bot.register_next_step_handler(msg, tts_2)
 
@@ -99,10 +96,9 @@ def tts_2(message):
         bot.send_message(user_id, 'ваш лимит на синтез речи исчерпан')
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'stt')
-def stt(call):
-    user_id = call.message.chat.id
-    bot.delete_message(user_id, call.message.message_id)
+@bot.message_handler(commands=['stt'])
+def stt(message):
+    user_id = message.chat.id
     msg = bot.send_message(user_id, 'пришлите голосовое сообщение')
     bot.register_next_step_handler(msg, stt_2)
 
@@ -150,11 +146,6 @@ def dialogue(call):
 
 # endregion
 # region dialogue
-
-
-def message_register(user_id):
-    msg = bot.send_message(user_id, 'ваш ответ?')
-    bot.register_next_step_handler(msg, t_or_v)
 
 
 def t_or_v(message):
@@ -252,8 +243,8 @@ def send_voice_answer(text, user_id, msg):
     bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.id, text='синтезирую речь...')
     answer = gen_voice_answer(user_id, text)
     bot.delete_message(user_id, msg.id)
-    bot.send_voice(user_id, answer)
-    message_register(user_id)
+    msg = bot.send_voice(user_id, answer)
+    bot.register_next_step_handler(msg, t_or_v)
 
 
 def gen_voice_answer(user_id, text):
@@ -263,8 +254,8 @@ def gen_voice_answer(user_id, text):
 
 
 def send_text_answer(text, user_id):
-    bot.send_message(user_id, text)
-    message_register(user_id)
+    msg = bot.send_message(user_id, text)
+    bot.register_next_step_handler(msg, t_or_v)
 
 # endregion
 
