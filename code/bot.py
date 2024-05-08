@@ -245,14 +245,17 @@ def send_voice_answer(text, user_id, msg):
     bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.id, text='синтезирую речь...')
     answer = gen_voice_answer(user_id, text)
     bot.delete_message(user_id, msg.id)
-    msg = bot.send_voice(user_id, answer)
-    bot.register_next_step_handler(msg, t_or_v)
+    if answer[0]:
+        msg = bot.send_voice(user_id, answer[1])
+        bot.register_next_step_handler(msg, t_or_v)
+    else:
+        msg = bot.send_message(user_id, answer[1])
 
 
 def gen_voice_answer(user_id, text):
     res = text_to_speach(text)
     tokens_update(user_id, len(text), 'tts_simbols')
-    return res[1]
+    return res
 
 
 def send_text_answer(text, user_id):

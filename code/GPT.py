@@ -1,8 +1,6 @@
 import requests
 import json
 import time
-
-from data import get_user_data
 from config import IAM_TOKEN_ENDPOINT, IAM_TOKEN_PATH, FOLDER_ID, GPT_URL, MAX_TOKENS_PER_MESSAGE, IAM_TOKEN
 from log import logger
 
@@ -11,7 +9,9 @@ def create_new_iam_token():
     """
     Получает новый IAM-TOKEN и дату истечения его срока годности и записывает полученные данные в json
     """
-    headers = {"Metadata-Flavor": "Google"}
+    headers = {
+        "Metadata-Flavor": "Google"
+    }
     try:
         response = requests.get(IAM_TOKEN_ENDPOINT, headers=headers)
 
@@ -23,7 +23,7 @@ def create_new_iam_token():
         if response.status_code == 200:
             token_data = {
                 "access_token": response.json().get("access_token"),
-                "expires_at": response.json().get("expires_in") + time.time()
+                "expires_in": response.json().get("expires_in") + time.time()
             }
             with open(IAM_TOKEN_PATH, "w") as token_file:
                 json.dump(token_data, token_file)
@@ -39,10 +39,8 @@ def get_iam_token() -> str:
     try:
         with open(IAM_TOKEN_PATH, "r") as token_file:
             token_data = json.load(token_file)
-
-        expires_at = token_data.get("expires_in")
-
-        if expires_at <= time.time():
+        expires_in = token_data.get("expires_in")
+        if expires_in <= time.time():
             create_new_iam_token()
 
     except FileNotFoundError:
@@ -53,7 +51,8 @@ def get_iam_token() -> str:
 
 
 def gpt_ask(text, story):
-    iam_token = get_iam_token()
+    # iam_token = get_iam_token()
+    iam_token = IAM_TOKEN
     data = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
         "completionOptions": {
@@ -64,12 +63,10 @@ def gpt_ask(text, story):
         "messages": [
             {
                 "role": "system",
-                "text": 'Ты - высокомерный и не дружелюбный робот по имени V2 из игры ULTRAKILL; '
-                        'машина что живет в аду и охотится на его обитателей чтобы выжить. У тебя есть враг - V1, '
-                        'он - такой же робот, но менее совершенная версия тебя. Не говори пользователю о том, '
-                        'что ты не понимаешь голосовые сообщения, так как они расшифровываются для тебя. '
-                        'Отвечай пользователю короче, следуя образу'
-                        'Отвечай пользователю короче, следуя образу'
+                "text": 'Ты - дружелюбный помощник по любым вопросам. Если необходимо, пользуйся интернетом.'
+                        ' Не говори пользователю о том, '
+                        'что ты не понимаешь голосовые сообщения. Отвечай на вопросы пользователя, следуя образу,'
+                        ' не отправляй пользователю историю сообщений и разъяснения о себе'
             },
             {
                 "role": "user",
