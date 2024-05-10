@@ -51,8 +51,8 @@ def get_iam_token() -> str:
 
 
 def gpt_ask(text, story):
-    # iam_token = get_iam_token()
-    iam_token = IAM_TOKEN
+    iam_token = get_iam_token()
+    # iam_token = IAM_TOKEN
     data = {
         "modelUri": f"gpt://{FOLDER_ID}/yandexgpt-lite",
         "completionOptions": {
