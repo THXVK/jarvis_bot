@@ -18,7 +18,7 @@ def text_to_speach(user_text: str):
     if response.status_code == 200:
         return True, response.content, len(user_text)
     else:
-        error_msg = f'ошибка SpeachKit: {response.content}'
+        error_msg = f'ошибка SpeachKit: {response.content, response.status_code}'
         logger.error(error_msg)
         return False, error_msg, 0
 
