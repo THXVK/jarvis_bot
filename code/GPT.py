@@ -14,7 +14,6 @@ def create_new_iam_token():
     }
     try:
         response = requests.get(IAM_TOKEN_ENDPOINT, headers=headers)
-        print(response.status_code)
     except Exception as e:
         error_msg = f"Ошибка в create_new_iam_token: {e}"
         logger.error(error_msg)
@@ -39,7 +38,6 @@ def get_iam_token() -> str:
     try:
         with open(IAM_TOKEN_PATH, "r") as token_file:
             token_data = json.load(token_file)
-        print(token_data)
         expires_in = token_data.get("expires_in")
         if expires_in <= time.time():
             create_new_iam_token()
@@ -49,7 +47,6 @@ def get_iam_token() -> str:
     with open(IAM_TOKEN_PATH, "r") as token_file:
         token_data = json.load(token_file)
 
-    print(token_data.get("access_token"))
     return token_data.get("access_token")
 
 
